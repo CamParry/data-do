@@ -1,64 +1,21 @@
 class DataDo {
-	elementMap = {
-		window: window,
-		win: window,
-		document: document,
-		doc: document,
-	};
-
-	triggerMap = {
-		keydown: (event, params) => event.key === params[0],
-	};
-
-	actionMap = {
-		disable: this.disable,
-		enable: this.enable,
-		toggleDisable: this.toggleDisable,
-		submit: this.submit,
-		toggleShow: this.toggleShow,
-		show: this.show,
-		hide: this.hide,
-		expand: this.expand,
-		collapse: this.collapse,
-		toggleCollapse: this.toggleCollapse,
-		addClass: this.addClass,
-		removeClass: this.removeClass,
-		toggleClass: this.toggleClass,
-		fadeIn: this.fadeIn,
-		fadeOut: this.fadeOut,
-		collapse: this.collapse,
-		expand: this.expand,
-		toggleCollapse: this.toggleCollapse,
-		scrollToTop: this.scrollToTop,
-		scrollTo: this.scrollTo,
-		setAttribute: this.setAttribute,
-		removeAttribute: this.removeAttribute,
-		toggleAttribute: this.toggleAttribute,
-		setActive: this.setActive,
-		removeActive: this.removeActive,
-		toggleActive: this.toggleActive,
-		setHref: this.setHref,
-		setSrc: this.setSrc,
-		log: this.log,
-	};
-
 	init() {
 		document.querySelectorAll("[data-do]").forEach((element) => {
 			const commands = element.getAttribute("data-do").split("|");
 			commands.forEach((commandStr) => {
 				const command = this.getCommand(element, commandStr);
 				if (!command) return;
-				this.initCommand(command);
+				this.handleCommand(command);
 			});
 		});
 	}
 
-	initCommand(command) {
+	handleCommand(command) {
 		command.element.addEventListener(command.trigger.name, (event) => {
 			if (
 				command.trigger.params &&
-				this.triggerMap[command.trigger.name] &&
-				!this.triggerMap[command.trigger.name]?.(
+				this.triggers[command.trigger.name] &&
+				!this.triggers[command.trigger.name]?.(
 					event,
 					command.trigger.params
 				)
@@ -67,16 +24,12 @@ class DataDo {
 			}
 
 			command.targets.forEach((target) => {
-				this.actionMap[command.action.name]?.(
+				this.actions[command.action.name]?.(
 					target,
 					...command.action.params
 				);
 			});
 		});
-	}
-
-	stripQuotes(str) {
-		return str.replace(/'/g, "");
 	}
 
 	getCommand(element, command) {
@@ -99,175 +52,130 @@ class DataDo {
 	}
 
 	getElement(selector) {
-		if (selector === "window") return window;
-		if (selector === "win") return window;
-		if (selector === "document") return document;
-		if (selector === "doc") return document;
-		return document.querySelector(selector);
+		return this.elements[selector] ?? document.querySelector(selector);
 	}
 
 	getTrigger(trigger) {
-		const parts = trigger.split("(");
-		const name = parts[0];
-		let params = [];
-		if (parts[1]) {
-			params = parts[1].replace(")", "").split(",").map(this.stripQuotes);
-		}
-		return { name, params };
+		return this.getNameAndParams(trigger);
 	}
 
-	getTargets(current, selector) {
-		if (selector === "this") return [current];
-		if (selector === "next") return [current.nextElementSibling];
-		if (selector === "prev") return [current.previousElementSibling];
-		if (selector === "parent") return [current.parentElement];
-		if (selector === "children") return Array.from(current.children);
-		if (selector === "first-child") return [current.firstElementChild];
-		if (selector === "last-child") return [current.lastElementChild];
-		if (selector === "console") return [console];
-		return Array.from(document.querySelectorAll(selector));
+	getTargets(element, selector) {
+		return (
+			this.targets[selector]?.(element) ??
+			Array.from(document.querySelectorAll(selector))
+		);
 	}
 
 	getAction(action) {
-		const parts = action.split("(");
+		return this.getNameAndParams(action);
+	}
+
+	getNameAndParams(str) {
+		const parts = str.split("(");
 		const name = parts[0];
-		let params = [];
-		if (parts[1]) {
-			params = parts[1].replace(")", "").split(",").map(this.stripQuotes);
-		}
+		const params = parts[1]
+			? parts[1].replace(")", "").split(",").map(this.stripQuotes)
+			: [];
 		return { name, params };
 	}
 
-	disable(element) {
-		element.disabled = true;
+	stripQuotes(str) {
+		return str.replace(/'/g, "");
 	}
 
-	enable(element) {
-		element.disabled = false;
-	}
+	elements = {
+		window: window,
+		win: window,
+		document: document,
+		doc: document,
+	};
 
-	toggleDisable(element) {
-		element.disabled = !element.disabled;
-	}
+	triggers = {
+		keydown: (event, params) => event.key === params[0],
+	};
 
-	submit(element) {
-		element.submit();
-	}
+	targets = {
+		this: (el) => [el],
+		next: (el) => [el.nextElementSibling],
+		prev: (el) => [el.previousElementSibling],
+		parent: (el) => [el.parentElement],
+		children: (el) => Array.from(el.children),
+		firstChild: (el) => [el.firstElementChild],
+		lastChild: (el) => [el.lastElementChild],
+		console: (el) => [console],
+	};
 
-	toggleShow(element) {
-		element.style.display = element.style.display === "none" ? "" : "none";
-	}
-
-	show(element) {
-		element.style.display = "";
-	}
-
-	hide(element) {
-		element.style.display = "none";
-	}
-
-	addClass(element, className) {
-		element.classList.add(className);
-	}
-
-	removeClass(element, className) {
-		element.classList.remove(className);
-	}
-
-	toggleClass(element, className) {
-		element.classList.toggle(className);
-	}
-
-	fadeIn(element, ...params) {
-		const duration = params[0] ?? 250;
-		element.style.transition = "opacity " + duration + "ms ease-out";
-		element.style.opacity = 1;
-	}
-
-	fadeOut(element, ...params) {
-		const duration = params[0] ?? 250;
-		element.style.transition = "opacity " + duration + "ms ease-out";
-		element.style.opacity = 0;
-	}
-
-	collapse(element, ...params) {
-		const duration = params[0] ?? 250;
-		const height = element.offsetHeight;
-		element.style.height = height + "px";
-		element.offsetHeight;
-		element.style.transition = "all " + duration + "ms ease-out";
-		element.style.height = 0;
-	}
-
-	expand(element, ...params) {
-		const duration = params[0] ?? 250;
-		element.style.height = "auto";
-		element.style.transition = "none";
-		const height = element.offsetHeight;
-		element.style.height = 0;
-		element.style.transition = "all " + duration + "ms ease-out";
-		element.offsetHeight;
-		element.style.height = height + "px";
-		setTimeout(() => {
-			element.style.height = "auto";
-		}, duration);
-	}
-
-	toggleCollapse(element, ...params) {
-		element.offsetHeight === 0
-			? this.expand(element, ...params)
-			: this.collapse(element, ...params);
-	}
-
-	scrollToTop() {
-		window.scrollTo({ top: 0, behavior: "smooth" });
-	}
-
-	scrollTo(element) {
-		element.scrollIntoView({ behavior: "smooth" });
-	}
-
-	setAttribute(element, ...params) {
-		const name = params[0];
-		const value = params[1];
-		element.setAttribute(name, value);
-	}
-
-	removeAttribute(element, ...params) {
-		const name = params[0];
-		element.removeAttribute(name);
-	}
-
-	toggleAttribute(element, ...params) {
-		const name = params[0];
-		element.hasAttribute(name)
-			? element.removeAttribute(name)
-			: element.setAttribute(name, "");
-	}
-
-	setActive(element) {
-		element.classList.add("active");
-	}
-
-	removeActive(element) {
-		element.classList.remove("active");
-	}
-
-	toggleActive(element) {
-		element.classList.toggle("active");
-	}
-
-	log(element, ...params) {
-		element.log(params);
-	}
-
-	setHref(element, ...params) {
-		element.href = params[0];
-	}
-
-	setSrc(element, ...params) {
-		element.src = params[0];
-	}
+	actions = {
+		disable: (el) => (el.disabled = true),
+		enable: (el) => (el.disabled = false),
+		toggleDisable: (el) => (el.disabled = !el.disabled),
+		submit: (el) => el.submit(),
+		toggleShow: (el) =>
+			(el.style.display = el.style.display === "none" ? "" : "none"),
+		show: (el) => (el.style.display = ""),
+		hide: (el) => (el.style.display = "none"),
+		addClass: (el, className) => el.classList.add(className),
+		removeClass: (el, className) => el.classList.remove(className),
+		toggleClass: (el, className) => el.classList.toggle(className),
+		fadeIn: (el, ...params) => {
+			const duration = params[0] ?? 250;
+			el.style.transition = "opacity " + duration + "ms ease-out";
+			el.style.opacity = 1;
+		},
+		fadeOut: (el, ...params) => {
+			const duration = params[0] ?? 250;
+			el.style.transition = "opacity " + duration + "ms ease-out";
+			el.style.opacity = 0;
+		},
+		collapse: (el, ...params) => {
+			const duration = params[0] ?? 250;
+			const height = el.offsetHeight;
+			el.style.height = height + "px";
+			el.offsetHeight;
+			el.style.transition = "all " + duration + "ms ease-out";
+			el.style.height = 0;
+		},
+		expand: (el, ...params) => {
+			const duration = params[0] ?? 250;
+			el.style.height = "auto";
+			el.style.transition = "none";
+			const height = el.offsetHeight;
+			el.style.height = 0;
+			el.style.transition = "all " + duration + "ms ease-out";
+			el.offsetHeight;
+			el.style.height = height + "px";
+			setTimeout(() => {
+				el.style.height = "auto";
+			}, duration);
+		},
+		toggleCollapse: (el, ...params) =>
+			el.offsetHeight === 0
+				? this.expand(el, ...params)
+				: this.collapse(el, ...params),
+		scrollToTop: () => window.scrollTo({ top: 0, behavior: "smooth" }),
+		scrollTo: (el) => el.scrollIntoView({ behavior: "smooth" }),
+		setAttribute: (el, ...params) => {
+			const name = params[0];
+			const value = params[1];
+			el.setAttribute(name, value);
+		},
+		removeAttribute: (el, ...params) => {
+			const name = params[0];
+			el.removeAttribute(name);
+		},
+		toggleAttribute: (el, ...params) => {
+			const name = params[0];
+			el.hasAttribute(name)
+				? el.removeAttribute(name)
+				: el.setAttribute(name, "");
+		},
+		setActive: (el) => el.classList.add("active"),
+		removeActive: (el) => el.classList.remove("active"),
+		toggleActive: (el) => el.classList.toggle("active"),
+		setHref: (el, ...params) => (el.href = params[0]),
+		setSrc: (el, ...params) => (el.src = params[0]),
+		log: (el, ...params) => el.log(params),
+	};
 }
 
 document.addEventListener("DOMContentLoaded", function () {
