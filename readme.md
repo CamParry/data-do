@@ -12,7 +12,7 @@ A ultra lightweight javascript utility library for handling simple interactions 
 
 To use data-do you apply "commands" via the data-do attribute on elements in the dom.
 
-### Simple
+### Basic
 
 A command uses the following format: "trigger:target:action" where trigger is the name of the event to listen to, target is a css(ish) selector that specifes where an action should take place, and action is a function to run against the target.
 
