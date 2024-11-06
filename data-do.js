@@ -150,8 +150,8 @@ class DataDo {
 		},
 		toggleCollapse: (el, ...params) =>
 			el.offsetHeight === 0
-				? this.expand(el, ...params)
-				: this.collapse(el, ...params),
+				? this.actions.expand(el, ...params)
+				: this.actions.collapse(el, ...params),
 		scrollToTop: () => window.scrollTo({ top: 0, behavior: "smooth" }),
 		scrollTo: (el) => el.scrollIntoView({ behavior: "smooth" }),
 		setAttribute: (el, ...params) => {
