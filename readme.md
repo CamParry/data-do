@@ -55,7 +55,7 @@ A command can also have an optional "element" component at the beginning in the 
 
 ### Structure
 
-A command is made up of the following "element:trigger(param,param):target:action(param,param)"
+A command is made up of the following components "element:trigger(param,param):target:action(param,param)"
 
 Some triggers and actions are configured to take paramaters as comma seperated lists, these are predefined and can be found below.
 
