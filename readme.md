@@ -4,6 +4,8 @@ A ultra lightweight javascript utility library for handling simple interactions 
 
 ## Installation
 
+Copy code from data-do.js and self host. (CDN coming soon)
+
 ```html
 <script src="./data-do.js" type="module"></script>
 ```
